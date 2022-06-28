@@ -1,6 +1,7 @@
 package com.danielstawiarski.currencyconversionservice.controller;
 
 import com.danielstawiarski.currencyconversionservice.dto.CurrencyConversionDTO;
+import com.danielstawiarski.currencyconversionservice.proxy.CurrencyExchangeServiceProxy;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class CurrencyConversionController {
 
     private final RestTemplate restTemplate;
+    private final CurrencyExchangeServiceProxy exchangeServiceProxy;
 
     @GetMapping(value = "/currency-conversion/from/{source}/to/{target}/quantity/{quantityValue}")
     public CurrencyConversionDTO calculateCurrencyConversion(
@@ -43,4 +45,20 @@ public class CurrencyConversionController {
                 .build();
     }
 
+    @GetMapping(value = "/currency-conversion-feign/from/{source}/to/{target}/quantity/{quantityValue}")
+    public CurrencyConversionDTO calculateCurrencyConversionFeign(
+            @PathVariable String source,
+            @PathVariable String target,
+            @PathVariable BigDecimal quantityValue) {
+        CurrencyConversionDTO response = exchangeServiceProxy.getCurrencyExchangeRate(source, target);
+        return CurrencyConversionDTO.builder()
+                .id(response.getId())
+                .conversionMultiple(response.getConversionMultiple())
+                .from(source)
+                .to(target)
+                .quantity(quantityValue)
+                .environment(response.getEnvironment())
+                .totalCalculatedAmount(quantityValue.multiply(response.getConversionMultiple()))
+                .build();
+    }
 }
